@@ -1,0 +1,449 @@
+---
+title: "acetaminophen birth outcomes code"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+```{r}
+# load packages
+library(tidyverse)
+library(foreach)
+library(CBPS)
+# load data
+imputed_Data = readRDS("imputed data aceta birth outcomes")
+exposure_and_outcome = readRDS("exposure and outcome aceta birth outcomes")
+exposure_and_outcome2 = readRDS("exposure_and_outcome2")
+
+
+
+a = foreach(i = 1:10, .combine = "rbind") %do% {
+  temp_data <- complete(imputed_Data, i)%>% left_join(exposure_and_outcome)
+  #ipw for selection bias
+  fit = CBPS(missing ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp_data,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp_data$weight_selection <- unlist(fit["weights"])
+
+  temp = temp_data %>% filter(missing == "no")
+  #ipw for covariate control
+  fit = CBPS(detected ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp$weight_covar <- unlist(fit["weights"])
+  temp = temp %>% mutate(final_weight = weight_covar*weight_selection)
+
+  model1 <- lm(birthweight ~ detected, data = temp, weights = final_weight)
+  broom::tidy(model1) %>% filter(term == "detectedyes") %>% mutate(outcome = "birthweight")
+}
+
+b = foreach(i = 1:10, .combine = "rbind") %do% {
+  temp_data <- complete(imputed_Data, i)%>% left_join(exposure_and_outcome)
+  #ipw for selection bias
+  fit = CBPS(missing ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp_data,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp_data$weight_selection <- unlist(fit["weights"])
+
+  temp = temp_data %>% filter(missing == "no")
+  #ipw for covariate control
+  fit = CBPS(detected ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp$weight_covar <- unlist(fit["weights"])
+  temp = temp %>% mutate(final_weight = weight_covar*weight_selection)
+
+  model1 <- lm(birthweight_zscore ~ detected, data = temp, weights = final_weight)
+  broom::tidy(model1) %>% filter(term == "detectedyes") %>% mutate(outcome = "birthweight_zscore")
+}
+
+c = foreach(i = 1:10, .combine = "rbind") %do% {
+  temp_data <- complete(imputed_Data, i)%>% left_join(exposure_and_outcome)
+  #ipw for selection bias
+  fit = CBPS(missing ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp_data,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp_data$weight_selection <- unlist(fit["weights"])
+
+  temp = temp_data %>% filter(missing == "no")
+  #ipw for covariate control
+  fit = CBPS(detected ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp$weight_covar <- unlist(fit["weights"])
+  temp = temp %>% mutate(final_weight = weight_covar*weight_selection)
+
+  model1 <- glm(preterm ~ detected, data = temp, weights = final_weight, family = binomial("logit"))
+  broom::tidy(model1) %>% filter(term == "detectedyes") %>% mutate(outcome = "preterm")
+}
+
+d = foreach(i = 1:10, .combine = "rbind") %do% {
+  temp_data <- complete(imputed_Data, i)%>% left_join(exposure_and_outcome)
+  #ipw for selection bias
+  fit = CBPS(missing ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp_data,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp_data$weight_selection <- unlist(fit["weights"])
+
+  temp = temp_data %>% filter(missing == "no")
+  #ipw for covariate control
+  fit = CBPS(detected ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp$weight_covar <- unlist(fit["weights"])
+  temp = temp %>% mutate(final_weight = weight_covar*weight_selection)
+
+  model1 <- glm(sga ~ detected, data = temp, weights = final_weight, family = binomial("logit"))
+  broom::tidy(model1) %>% filter(term == "detectedyes") %>% mutate(outcome = "sga")
+}
+
+e = foreach(i = 1:10, .combine = "rbind") %do% {
+  temp_data <- complete(imputed_Data, i)%>% left_join(exposure_and_outcome)
+  #ipw for selection bias
+  fit = CBPS(missing ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp_data,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp_data$weight_selection <- unlist(fit["weights"])
+
+  temp = temp_data %>% filter(missing == "no")
+  #ipw for covariate control
+  fit = CBPS(detected ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp$weight_covar <- unlist(fit["weights"])
+  temp = temp %>% mutate(final_weight = weight_covar*weight_selection)
+
+  model1 <- glm(lga ~ detected, data = temp, weights = final_weight, family = binomial("logit"))
+  broom::tidy(model1) %>% filter(term == "detectedyes") %>% mutate(outcome = "lga")
+}
+
+## these are for gestational diabetes then preeclampsia
+exposure_and_outcome2 = exposure_and_outcome %>% left_join(diag_gross) %>% mutate(gestational_diabetes = as.factor(gestational_diabetes)) %>% mutate(preeclampsia = as.factor(preeclampsia))
+
+f = foreach(i = 1:10, .combine = "rbind") %do% {
+  temp_data <- complete(imputed_Data, i)%>% left_join(exposure_and_outcome2)
+  #ipw for selection bias
+  fit = CBPS(missing ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp_data,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp_data$weight_selection <- unlist(fit["weights"])
+
+  temp = temp_data %>% filter(missing == "no")
+  #ipw for covariate control
+  fit = CBPS(detected ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp$weight_covar <- unlist(fit["weights"])
+  temp = temp %>% mutate(final_weight = weight_covar*weight_selection)
+
+  model1 <- glm(gestational_diabetes ~ detected, data = temp, weights = final_weight, family = binomial("logit"))
+  broom::tidy(model1) %>% filter(term == "detectedyes") %>% mutate(outcome = "gestational_diabetes")
+}
+
+#preeclampsia
+g = foreach(i = 1:10, .combine = "rbind") %do% {
+  temp_data <- complete(imputed_Data, i)%>% left_join(exposure_and_outcome2)
+  #ipw for selection bias
+  fit = CBPS(missing ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp_data,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp_data$weight_selection <- unlist(fit["weights"])
+
+  temp = temp_data %>% filter(missing == "no")
+  #ipw for covariate control
+  fit = CBPS(detected ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp$weight_covar <- unlist(fit["weights"])
+  temp = temp %>% mutate(final_weight = weight_covar*weight_selection)
+
+  model1 <- glm(preeclampsia ~ detected, data = temp, weights = final_weight, family = binomial("logit"))
+  broom::tidy(model1) %>% filter(term == "detectedyes") %>% mutate(outcome = "preeclampsia")
+}
+
+h = foreach(i = 1:10, .combine = "rbind") %do% {
+  temp_data <- complete(imputed_Data, i)%>% left_join(exposure_and_outcome2)
+  #ipw for selection bias
+  fit = CBPS(missing ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp_data,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp_data$weight_selection <- unlist(fit["weights"])
+
+  temp = temp_data %>% filter(missing == "no")
+  #ipw for covariate control
+  fit = CBPS(detected ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp$weight_covar <- unlist(fit["weights"])
+  temp = temp %>% mutate(final_weight = weight_covar*weight_selection)
+
+  model1 <- glm(high_blood_pressure ~ detected, data = temp, weights = final_weight, family = binomial("logit"))
+  broom::tidy(model1) %>% filter(term == "detectedyes") %>% mutate(outcome = "high_blood_pressure")
+}
+
+all_models = bind_rows(a,b,c,d,e,f,g,h)
+
+#### get the rubins rule pooled estimates and std.errors
+outcomes = c("preterm", "birthweight", "birthweight_zscore", "sga", "lga", "gestational_diabetes", "preeclampsia", "high_blood_pressure")
+library(Amelia)
+all_pooled = foreach(outcome = outcomes, .combine = "rbind") %do% {
+  temp_outcome = outcome
+  temp = all_models %>% filter(outcome == temp_outcome)
+  pooled = mi.meld(matrix(temp$estimate), matrix(temp$std.error))
+  pooled$q.mi
+  pooled$se.mi
+  data.frame(estimate = pooled$q.mi, std.error = pooled$se.mi) %>% mutate(outcome = temp_outcome) %>% 
+    mutate(lci = estimate - qnorm(0.975)*std.error,
+           uci = estimate + qnorm(0.975)*std.error)
+}
+
+
+# all_pooled has the selection bias and covariate adjusted models pooled across all 10 imputed data sets
+
+#now we do cox proportional hazards for gestational age
+
+library(survival)
+library(survminer)
+#survival model will estimate the instantaneous hazard of delivering at any given gestational week per one-unit increase in the exposure (detected acetaminophen compared to not detected)
+
+gest_age = foreach(i = 1:10, .combine = "rbind") %do% {
+  temp_data <- complete(imputed_Data, i)%>% left_join(exposure_and_outcome)
+  #ipw for selection bias
+  fit = CBPS(missing ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp_data,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp_data$weight_selection <- unlist(fit["weights"])
+
+  temp = temp_data %>% filter(missing == "no")
+  #ipw for covariate control
+  fit = CBPS(detected ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp$weight_covar <- unlist(fit["weights"])
+  temp = temp %>% mutate(final_weight = weight_covar*weight_selection) %>% mutate(birth = 2)
+
+  cox_model <- coxph(Surv(gestational_age_delivery, birth) ~ detected, data = temp, weights = final_weight)
+  broom::tidy(cox_model)
+  
+}
+
+pooled = mi.meld(matrix(gest_age$estimate), matrix(gest_age$robust.se))
+  pooled$q.mi
+  pooled$se.mi
+  gest_age_pooled = data.frame(estimate = pooled$q.mi, std.error = pooled$se.mi) %>% mutate(outcome = "gestational age") %>% 
+    mutate(lci = estimate - qnorm(0.975)*std.error,
+           uci = estimate + qnorm(0.975)*std.error)
+
+all_pooled = all_pooled %>% bind_rows(gest_age_pooled)
+
+
+
+
+
+################
+################
+# covariate adjusted models
+################
+#################
+################
+exposure_and_outcome
+main_data = readRDS("acetaminophen birth outcomes 393")
+imputed_Data <-mice(main_data,m=10,maxit=50,meth='pmm',seed=2021)
+temp_data <- complete(imputed_Data, 1)%>% filter(missing == "no")
+
+a = foreach(i = 1:10, .combine = "rbind") %do% {
+  temp <- complete(imputed_Data, i)%>% mutate(preterm = as.factor(preterm)) %>% 
+    left_join(exposure_and_outcome)
+ 
+  #ipw for covariate control
+  fit = CBPS(detected ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp$weight_covar <- unlist(fit["weights"])
+  
+
+  model1 <- lm(birthweight ~ detected, data = temp, weights = weight_covar)
+  broom::tidy(model1) %>% filter(term == "detectedyes") %>% mutate(outcome = "birthweight")
+}
+
+b = foreach(i = 1:10, .combine = "rbind") %do% {
+  temp <- complete(imputed_Data, i)%>% mutate(preterm = as.factor(preterm)) %>%  left_join(exposure_and_outcome)
+  
+  #ipw for covariate control
+  fit = CBPS(detected ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp$weight_covar <- unlist(fit["weights"])
+  
+
+  model1 <- lm(birthweight_zscore ~ detected, data = temp, weights = weight_covar)
+  broom::tidy(model1) %>% filter(term == "detectedyes") %>% mutate(outcome = "birthweight_zscore")
+}
+
+c = foreach(i = 1:10, .combine = "rbind") %do% {
+  temp <- complete(imputed_Data, i)%>% mutate(preterm = as.factor(preterm)) %>%  left_join(exposure_and_outcome)
+  
+  #ipw for covariate control
+  fit = CBPS(detected ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp$weight_covar <- unlist(fit["weights"])
+  
+
+  model1 <- glm(preterm ~ detected, data = temp, weights = weight_covar, family = binomial("logit"))
+  broom::tidy(model1) %>% filter(term == "detectedyes") %>% mutate(outcome = "preterm")
+}
+
+d = foreach(i = 1:10, .combine = "rbind") %do% {
+  temp <- complete(imputed_Data, i)%>% mutate(preterm = as.factor(preterm)) %>% 
+    mutate(sga = as.factor(sga)) %>% 
+    left_join(exposure_and_outcome)
+ 
+  #ipw for covariate control
+  fit = CBPS(detected ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp$weight_covar <- unlist(fit["weights"])
+  
+
+  model1 <- glm(sga ~ detected, data = temp, weights = weight_covar, family = binomial("logit"))
+  broom::tidy(model1) %>% filter(term == "detectedyes") %>% mutate(outcome = "sga")
+}
+
+e = foreach(i = 1:10, .combine = "rbind") %do% {
+  temp <- complete(imputed_Data, i)%>% mutate(preterm = as.factor(preterm)) %>%
+    mutate(lga = as.factor(lga)) %>% 
+    left_join(exposure_and_outcome)
+ 
+  #ipw for covariate control
+  fit = CBPS(detected ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp$weight_covar <- unlist(fit["weights"])
+  
+
+  model1 <- glm(lga ~ detected, data = temp, weights = weight_covar, family = binomial("logit"))
+  broom::tidy(model1) %>% filter(term == "detectedyes") %>% mutate(outcome = "lga")
+}
+
+
+#now pregnancy outcomes
+exposure_and_outcome2 = readRDS("exposure_and_outcome2")
+f = foreach(i = 1:10, .combine = "rbind") %do% {
+  temp <- complete(imputed_Data, i)%>% mutate(preterm = as.factor(preterm)) %>%  left_join(exposure_and_outcome2)
+ 
+  #ipw for covariate control
+  fit = CBPS(detected ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp$weight_covar <- unlist(fit["weights"])
+  
+
+  model1 <- glm(gestational_diabetes ~ detected, data = temp, weights = weight_covar, family = binomial("logit"))
+  broom::tidy(model1) %>% filter(term == "detectedyes") %>% mutate(outcome = "gestational_diabetes")
+}
+
+g = foreach(i = 1:10, .combine = "rbind") %do% {
+  temp <- complete(imputed_Data, i)%>% mutate(preterm = as.factor(preterm)) %>%  left_join(exposure_and_outcome2)
+ 
+  #ipw for covariate control
+  fit = CBPS(detected ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp$weight_covar <- unlist(fit["weights"])
+  
+
+  model1 <- glm(preeclampsia ~ detected, data = temp, weights = weight_covar, family = binomial("logit"))
+  broom::tidy(model1) %>% filter(term == "detectedyes") %>% mutate(outcome = "preeclampsia")
+}
+
+h = foreach(i = 1:10, .combine = "rbind") %do% {
+  temp <- complete(imputed_Data, i)%>% mutate(preterm = as.factor(preterm)) %>%  left_join(exposure_and_outcome2)
+ 
+  #ipw for covariate control
+  fit = CBPS(detected ~  age_deliverymoth+ bmimotht1+ metude+ revenu+ fume+ alcool+ sexe_bb, data = temp,method = "exact", standardize = FALSE, ATT=0)
+  balance(fit)
+  
+  temp$weight_covar <- unlist(fit["weights"])
+  
+
+  model1 <- glm(high_blood_pressure ~ detected, data = temp, weights = weight_covar, family = binomial("logit"))
+  broom::tidy(model1) %>% filter(term == "detectedyes") %>% mutate(outcome = "high_blood_pressure")
+}
+
+all_models = bind_rows(a,b,c,d,e,f,g,h)
+
+#### get the rubins rule pooled estimates and std.errors
+outcomes = c("preterm", "birthweight", "birthweight_zscore", "sga", "lga", "gestational_diabetes", "preeclampsia", "high_blood_pressure")
+library(Amelia)
+all_pooled = foreach(outcome = outcomes, .combine = "rbind") %do% {
+  temp_outcome = outcome
+  temp = all_models %>% filter(outcome == temp_outcome)
+  pooled = mi.meld(matrix(temp$estimate), matrix(temp$std.error))
+  pooled$q.mi
+  pooled$se.mi
+  data.frame(estimate = pooled$q.mi, std.error = pooled$se.mi) %>% mutate(outcome = temp_outcome) %>% 
+    mutate(lci = estimate - qnorm(0.975)*std.error,
+           uci = estimate + qnorm(0.975)*std.error)
+}
+
+#write_csv(all_pooled, "covariate adjusted with preg outcomes.csv")
+
+
+
+########################################
+################ Unadjusted models ###############
+################################################
+
+main_data2 = readRDS("aceta birth outcomes data for unadjusted")
+
+  model1 <- lm(birthweight ~ detected, data = main_data2)
+  output = broom::tidy(model1) %>% filter(term == "detectedyes") 
+
+model1 <- lm(birthweight_zscore ~ detected, data = main_data2)
+  output = output %>% bind_rows(broom::tidy(model1))
+  
+model1 <- glm(preterm ~ detected, data = main_data2, family = binomial("logit"))
+ output = output %>% bind_rows(broom::tidy(model1))
+
+model1 <- glm(sga ~ detected, data = main_data2, family = binomial("logit"))
+ output = output %>% bind_rows(broom::tidy(model1))
+  
+ model1 <- glm(lga ~ detected, data = main_data2, family = binomial("logit"))
+  output = output %>% bind_rows(broom::tidy(model1))
+  
+model1 <- glm(gestational_diabetes ~ detected, data = main_data2, family = binomial("logit"))
+  output = output %>% bind_rows(broom::tidy(model1))
+  
+model1 <- glm(preeclampsia ~ detected, data = main_data2, family = binomial("logit"))
+  output = output %>% bind_rows(broom::tidy(model1))
+  
+model1 <- glm(high_blood_pressure ~ detected, data = main_data2, family = binomial("logit"))
+  output = output %>% bind_rows(broom::tidy(model1)) 
+  
+  output=output %>% filter(term == "detectedyes")
+  
+
+# output has all the unadjusted model results  
+```
+
+
+e values
+```{r}
+library(tidyverse)
+library(EValue)
+evalues.OR(est = 3.9, lo = 1.8, hi = 8.7, rare = TRUE)
+evalues.OLS(est = -135.87, se = 47.3, delta = 1, sd = sd(main_data$birthweight))
+evalues.OLS(est = -135.87, se = 47.3, delta = 1, sd = sd(main_data$birthweight))
+
+evalues.OLS(est = -.17398, se = 0.086909, delta = 1, sd = sd(main_data$birthweight_zscore))
+
+evalues.HR(1.198724, 1.001601, 1.434641, rare = 0)
+
+evalues.OR(.384394,.196403,.752327, rare = 1)
+
+#same result if i calc cohens d and enter into this formula
+evalues.MD(est = -.29095, se =.101292)
+
+sd(main_data$birthweight_zscore)
+sd(main_data$gestational_age_delivery)
+```
